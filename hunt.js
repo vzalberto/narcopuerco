@@ -12,6 +12,22 @@ consumer_key : CONSUMER_KEY
 
 })
 
+function filterUsers(user)
+{
+	switch(user)
+	{
+		case 'tecavaret':
+			return 1;
+			break;
+		case 'zafiroperu':
+			return 1;
+			break;
+		default:
+			return 0;
+			break;
+	}
+}
+
 function saveToFile(tweet)
 {	
 	filename = __dirname + "/tuits/" + tweet.user.screen_name + tweet.id.toString();
@@ -61,10 +77,11 @@ if(process.argv.length > 3)
 	var i = 3;
 	while(i < process.argv.length)
 	{
-		//crear objeto de parametros
 		keyword_list.push(process.argv[i]);
 		i++;
 	}
+
+
 console.log(keyword_list.toString());
 }
 
@@ -113,7 +130,6 @@ function generateWordList(keyword)
 function generateParameterArray(keyword)
 	{
 		var paramArray = [];
-		//how many keywords?
 		var i = 0;
 		while(i < keyword.length)
 		{
@@ -133,27 +149,38 @@ var stream = t.stream('statuses/filter',{
 
 var d = new Date();
 
+function tuitUrl(screen_name, id_str)
+{
+return 'https://twitter.com/' + screen_name + '/status/' + id_str;
+}
+
+function tuitMetaData(tweet)
+{
+	var dataString = '@' + tweet.user.screen_name
+			  + ' at:' + tweet.created_at
+		       	  + ' ' + tuitUrl(tweet.user.screen_name, tweet.id_str);
+
+	return dataString; 
+}
+
 //Comienzo del script
 //t.post('statuses/update', {status: 'andas chido @paranoidhominid  '+ d.toDateString()}, function(err, reply){});
 console.log("Cazando boletos de " + evento + "\n" + d.toDateString());
+stream.on('tweet', function(tweet)
+		{
+			printTweet(tweet);
+			
+  if((filterUsers(tweet.user.screen_name) || tweet.retweet_count > 0) ||(isThisRT(tweet.text)) || isThisRevendedor(tweet.text)){console.log('no procede')}
+        else{
+                t.post('statuses/update',
+                {
+                status: 'hey @paranoidhominid ira ve https://twitter.com/'
+                         + tweet.user.screen_name
+                         + '/status/'
+                         + tweet.id_str
+                },
+                        function(err,reply){}
+                )
+        }
 
-
-stream.on('tweet', function(tweet){
-	
-	printTweet(tweet);
-//	saveToFile(tweet);
-	if((tweet.retweet_count > 0) ||(isThisRT(tweet.text)) || isThisRevendedor(tweet.text)){console.log('no procede')}
-	else{
-		t.post('statuses/update',
-		{ 
-		status: 'hey @paranoidhominid ira ve https://twitter.com/'
-			 + tweet.user.screen_name 
-			 + '/status/' 
-			 + tweet.id_str 
-		},
-			function(err,reply){}
-		)
-	}
-})
-
-
+		});

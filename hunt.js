@@ -3,6 +3,29 @@ var Twit = require('twit')
 , fs = require('fs')
 , config = require('./config.js')
 
+require('./presas.js')
+
+
+var i = 0
+while(i < media.length)
+{
+console.log(media[i])
+i++
+}
+console.log('\n')
+
+function isThisMedia(screen_name)
+{
+	var i = 0
+	while(i < media.length)
+	{
+		if(screen_name == media[i])
+			return 1;
+		i++;
+	}
+	return 0;
+}
+
 var t = new Twit({
 
 consumer_key : CONSUMER_KEY 
@@ -117,7 +140,8 @@ function generateWordList(keyword)
 			keyword + ' rifar',
 			keyword + ' rifare',
 			keyword + ' rifaremos',
-	
+			keyword + ' sencillo',
+			keyword + ' sencilla',	
 			'tortapuerca'
 
 		];
@@ -163,21 +187,60 @@ function tuitMetaData(tweet)
 	return dataString; 
 }
 
+function sendDM(tweet)
+{
+	t.post('direct_messages/new', 
+			{
+			screen_name	: DM_RECEIVER,
+			text		: tuitMetaData(tweet)
+			},
+		function(err,reply){}
+		)
+
+	t.post('direct_messages/new', 
+			{
+			screen_name	: DM_RECEIVER,
+			text		: tweet.text
+			},
+		function(err,reply){}
+		)
+}
+ 
+function createStatus(tweet)
+{
+		var status = 	tweet.user.screen_name
+			+	' '
+			+	tweet.user.followers_count
+			+	' @'
+			+	DM_RECEIVER
+			+	' https://twitter.com/'
+			+	tweet.user.screen_name
+			+	'/status/'
+			+	tweet.id_str
+			+ 	' '
+			+ 	tweet.user.description
+			;
+		return status;
+}
+
 //Comienzo del script
 //t.post('statuses/update', {status: 'andas chido @paranoidhominid  '+ d.toDateString()}, function(err, reply){});
 console.log("Cazando boletos de " + evento + "\n" + d.toDateString());
 stream.on('tweet', function(tweet)
 		{
 			printTweet(tweet);
+			if( isThisMedia(tweet.user.screen_name) )
+			{
+				console.log('No apto para el pueblo');
+				sendDM(tweet)
+				return;
+			}	
 			
   if((filterUsers(tweet.user.screen_name) || tweet.retweet_count > 0) ||(isThisRT(tweet.text)) || isThisRevendedor(tweet.text)){console.log('no procede')}
         else{
                 t.post('statuses/update',
                 {
-                status: 'hey @paranoidhominid ira ve https://twitter.com/'
-                         + tweet.user.screen_name
-                         + '/status/'
-                         + tweet.id_str
+			status: createStatus(tweet)
                 },
                         function(err,reply){}
                 )

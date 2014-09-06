@@ -130,6 +130,8 @@ function generateWordList(keyword)
 			keyword + ' tenemos',
 			keyword + ' cortesia',
 			keyword + ' cortesias',
+			keyword + ' accesos',
+			keyword + ' acceso',
 			keyword + ' sortear',
 			keyword + ' sortearemos',
 			keyword + ' invitacion',
@@ -137,6 +139,10 @@ function generateWordList(keyword)
 			keyword + ' pulsera',
 			keyword + ' pulseras',
 			keyword + ' rifa',
+			keyword + ' pendientes redes',
+			keyword + ' pendiente redes'.
+			keyword + ' quiere',
+			keyword + ' quieres',
 			keyword + ' rifar',
 			keyword + ' rifare',
 			keyword + ' rifaremos',
@@ -187,11 +193,13 @@ function tuitMetaData(tweet)
 	return dataString; 
 }
 
-function sendDM(tweet)
+function sendDM(tweet, user)
 {
+	if(isThisRT(tweet.text))
+		return;
 	t.post('direct_messages/new', 
 			{
-			screen_name	: DM_RECEIVER,
+			screen_name	: user, 
 			text		: tuitMetaData(tweet)
 			},
 		function(err,reply){}
@@ -199,7 +207,7 @@ function sendDM(tweet)
 
 	t.post('direct_messages/new', 
 			{
-			screen_name	: DM_RECEIVER,
+			screen_name	: user, 
 			text		: tweet.text
 			},
 		function(err,reply){}
@@ -223,16 +231,47 @@ function createStatus(tweet)
 		return status;
 }
 
+
+function sendDMalert(id_str)
+{
+	var status = 	'@' + DM_RECEIVER
+		+	' ( ^w^ ) '
+		+	id_str
+		;
+	
+	return status;
+}
+
 //Comienzo del script
-//t.post('statuses/update', {status: 'andas chido @paranoidhominid  '+ d.toDateString()}, function(err, reply){});
 console.log("Cazando boletos de " + evento + "\n" + d.toDateString());
+
+function sendDM1(text, user)
+{
+	t.post('direct_messages/new',
+		{
+			screen_name	: user,
+			text		: "Bienvenid@ a la caza de boletos. Yo sere tu guia",
+		},
+	function(err,reply){console.log(reply);}
+	)
+}
+
+
 stream.on('tweet', function(tweet)
 		{
 			printTweet(tweet);
 			if( isThisMedia(tweet.user.screen_name) )
 			{
 				console.log('No apto para el pueblo');
-				sendDM(tweet)
+				sendDM(tweet, DM_RECEIVER);
+
+			t.post('statuses/update',
+			{
+				status: sendDMalert(tweet.id_str)
+			}, 
+				function(err,reply){}
+			)
+
 				return;
 			}	
 			
